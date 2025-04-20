@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <arg name="fixed_frame" default="odom" />
+    <arg name="fixed_frame_origin_tag" />
+    <arg name="num_of_bots" />
+    <arg name="odom_est_type" default="linear"/>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_broadcaster"
+          args="0 0 0 0 0 0 world map"/>
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="odom_broadcaster"
+          args="0 0 0 0 0 0 world odom"/> -->
+<!--    <node pkg="tf2_ros" type="static_transform_publisher" name="bot0_broadcaster"-->
+<!--          args="0 0 0 0 0 0 bot00_analyt base_link"/>-->
+
+    <!-- <node name="analyt_shape_broadcaster" pkg="slam_and_shape_estimation_for_soft_robots" type="analyt_shape_broadcaster.py"
+          respawn="true"
+          output="screen" args="$(arg num_of_bots) $(arg fixed_frame) $(arg fixed_frame_origin_tag) $(arg odom_est_type)">
+    </node> -->
+
+</launch>

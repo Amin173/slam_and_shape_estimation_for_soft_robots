@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <arg name="num_of_tags" default="13"/>
+
+    <!--     Set initial pose using AprilTags -->
+    <node name="set_initial_pose" pkg="slam_and_shape_estimation_for_soft_robots" type="initial_pose_from_apriltags.py" args="$(arg num_of_tags)" required="true"/>
+
+    <!-- Rosbag play -->
+    <node pkg="rosbag" type="play" name="player" args="--clock $(env bag_file)"/>
+
+</launch>

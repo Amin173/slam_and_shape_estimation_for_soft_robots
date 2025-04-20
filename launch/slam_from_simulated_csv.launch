@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+
+<!--This launch file will run all the necessary nodes to run the slam algorithm from a simulated robot. The simulation data will come from a csv file-->
+
+<launch>
+
+    <arg name="num_of_tags" default="13"/>
+    
+    <!--Define number of bots used in the simulation-->
+    <arg name="num_of_bots" default="12"/>
+
+    <arg name="csv_file" default="Example_12_bots.csv" />
+
+    <arg name="min_datapoints" default="360"/>
+
+    <!--     AprilTag -->
+    <node name="get_apriltag_data" pkg="slam_and_shape_estimation_for_soft_robots" type="simulated_apriltag_broadcaster.py" respawn="false"
+          args="$(arg num_of_tags) $(arg csv_file)"/>
+
+    <!--     Transorms -->
+      <node pkg="tf2_ros" type="static_transform_publisher" name="map_broadcaster"
+          args="0 0 0 0 0 0 world map"/>
+    
+
+    <!--    Rviz-->
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find slam_and_shape_estimation_for_soft_robots)/rviz/config_file.rviz"
+          respawn="true"/>
+
+    <!--     Set initial pose using AprilTags, I have to change this to a custom initial pose from CSV, or create an apriltag simulator from CSV -->
+    <node name="set_initial_pose" pkg="slam_and_shape_estimation_for_soft_robots" type="initial_pose_from_apriltags.py" args="$(arg num_of_tags)" respawn="false"/>
+
+
+    <!--Now we start other stuff needed for the slam algorithm to work-->
+    <!-- PointCloud -->
+    <node name="point_cloud2_broadcaster" pkg="slam_and_shape_estimation_for_soft_robots" type="point_cloud2_broadcaster_replay.py"
+          respawn="true"
+          output="screen" args="$(arg num_of_bots) $(arg min_datapoints)"/>
+    <node name="pc_frame_transform" pkg="slam_and_shape_estimation_for_soft_robots" type="pc_frame_transform.py"
+          respawn="true" output="screen"/>
+
+    <!-- PointCloud to LaserScan -->
+    <include file="$(find slam_and_shape_estimation_for_soft_robots)/launch/point_cloud_to_laserscan.launch"/>
+
+
+    <!--    Here the virutal TCP.launch file should start-->
+    <node name="tpc_all" pkg="slam_and_shape_estimation_for_soft_robots" type="simulated_robot_tcp.py" args="$(arg num_of_tags) $(arg num_of_bots) $(arg csv_file)" output="screen"
+        respawn="true"/>
+
+    <node name="pc_feature_extractor" pkg="slam_and_shape_estimation_for_soft_robots" type="pcl_feature_ext.py" respawn="true"
+          output="screen"/>
+
+    <!-- Gmapping -->
+    <include file="$(find slam_and_shape_estimation_for_soft_robots)/launch/gmapping.launch"/>
+
+    <!-- Odometry -->
+    <node name="odometry" pkg="slam_and_shape_estimation_for_soft_robots" type="odometry2.py" args="$(arg num_of_bots) rigid_joint simulated" respawn="true" output="screen"/>
+
+    <!--    IMU frame converter-->
+    <node name="imu_frame_conversion" pkg="slam_and_shape_estimation_for_soft_robots" type="imu_frame_conversion.py" respawn="true" args="$(arg num_of_bots)"
+          output="screen"/>
+
+    <!--    Save csv data-->
+    <!-- <node type="csv_saver.py" name="csv_saver" pkg="slam_and_shape_estimation_for_soft_robots" respawn="true" output="screen"/> -->
+    
+
+</launch>

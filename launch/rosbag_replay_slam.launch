@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <arg name="num_of_tags" default="13"/>
+    
+    <!--Define number of bots used in the simulation-->
+    <arg name="num_of_bots" default="12"/>
+
+    <arg name="min_datapoints" default="720"/>
+
+    <!-- <param name="/use_sim_time" value="true" /> -->
+
+    <rosparam command="load" file="$(find slam_and_shape_estimation_for_soft_robots)/config/config.yml" />
+
+    <!--     Transorms -->
+    <include file="$(find slam_and_shape_estimation_for_soft_robots)/launch/transforms_replay.launch">
+            <arg name="num_of_bots" value="$(arg num_of_bots)" />
+            <arg name="fixed_frame_origin_tag" value="$(arg num_of_bots)" />
+    </include>
+
+     <!-- Rosbag play -->
+    <node pkg="rosbag" type="play" name="player" args="--clock $(env bag_file)"/>
+
+
+    <!-- PointCloud -->
+    <node name="point_cloud2_broadcaster" pkg="slam_and_shape_estimation_for_soft_robots" type="point_cloud2_broadcaster_replay.py"
+          respawn="true"
+          output="screen" args="$(arg num_of_bots)  $(arg min_datapoints)"/>
+    <node name="pc_frame_transform" pkg="slam_and_shape_estimation_for_soft_robots" type="pc_frame_transform.py"
+          respawn="true" output="screen"/>
+
+    <!-- PointCloud to LaserScan -->
+    <include file="$(find slam_and_shape_estimation_for_soft_robots)/launch/point_cloud_to_laserscan.launch"/>
+
+    <!--    PointCloud feature extraction -->
+    <node name="pc_feature_extractor" pkg="slam_and_shape_estimation_for_soft_robots" type="pcl_feature_ext.py" respawn="true"
+          output="screen"/>
+    
+
+    
+      <!-- Gmapping -->
+    <include file="$(find slam_and_shape_estimation_for_soft_robots)/launch/gmapping.launch"/>
+    
+
+      <!-- Odometry -->
+    <node name="odometry" pkg="slam_and_shape_estimation_for_soft_robots" type="odometry2.py" args="$(arg num_of_bots) linear2 experimental" respawn="true" output="screen"/>
+
+    <!--    IMU frame converter-->
+    <node name="imu_frame_conversion" pkg="slam_and_shape_estimation_for_soft_robots" type="imu_frame_conversion.py" respawn="true" args="12"
+          output="screen"/>
+
+    <!--    Rviz-->
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find slam_and_shape_estimation_for_soft_robots)/rviz/config_file.rviz"
+          respawn="true"/>
+     
+</launch>
